@@ -28,8 +28,4 @@ public class USBConfiguration: CustomStringConvertible {
         self.libusbDescriptor = libusbDescriptor
         self.device = device
     }
-    
-    deinit {
-        libusb_free_config_descriptor(&libusbDescriptor)
-    }
 }

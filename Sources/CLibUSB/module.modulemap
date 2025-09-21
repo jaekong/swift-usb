@@ -1,5 +1,4 @@
 module CLibUSB {
     header "header.h"
-    link "libusb-1.0"
     export *
 }

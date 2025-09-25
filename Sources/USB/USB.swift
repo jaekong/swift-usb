@@ -2,10 +2,11 @@ import Foundation
 import CLibUSB
 
 public class USB {
-    public init(options: [USBOption] = []) throws {
-        var libusbOptions = options.map { $0.libusbOption }
+    public init() throws {
+//        var libusbOptions = options.map { $0.libusbOption }
         
-        let initialization = libusb_init_context(nil, &libusbOptions, Int32(libusbOptions.count))
+//        let initialization = libusb_init_context(nil, &libusbOptions, Int32(libusbOptions.count))
+        let initialization = libusb_init(nil)
         
         if let error = USBError(rawValue: initialization) {
             throw error
@@ -52,16 +53,16 @@ public class USB {
     }
 }
 
-public enum USBOption {
-    case logLevel(USBLogLevel)
-    
-    internal var libusbOption: libusb_init_option {
-        switch self {
-        case .logLevel(let level):
-            libusb_init_option(option: LIBUSB_OPTION_LOG_LEVEL, value: .init(ival: Int32(level.libusbLogLevel.rawValue)))
-        }
-    }
-}
+//public enum USBOption {
+//    case logLevel(USBLogLevel)
+//    
+//    internal var libusbOption: libusb_init_option {
+//        switch self {
+//        case .logLevel(let level):
+//            libusb_init_option(option: LIBUSB_OPTION_LOG_LEVEL, value: .init(ival: Int32(level.libusbLogLevel.rawValue)))
+//        }
+//    }
+//}
 
 public enum USBLogLevel: UInt8 {
     case none = 0

@@ -1,12 +1,8 @@
 import CLibUSB
 
-public class USBConfiguration: CustomStringConvertible {
+public struct USBConfiguration {
     internal var libusbDescriptor: libusb_config_descriptor
-    unowned internal var device: USBDevice
-    
-    public var description: String {
-        getString(from: libusbDescriptor.iConfiguration, device: device) ?? ""
-    }
+    private let deviceHandle: OpaquePointer
     
     public var interfaces: [USBInterface] {
         let count = libusbDescriptor.bNumInterfaces
@@ -21,11 +17,20 @@ public class USBConfiguration: CustomStringConvertible {
             interfaces.append(interface)
         }
         
-        return interfaces.flatMap { USBInterfaceGroup(from: $0, device: device).descriptors }
+        return interfaces.flatMap { USBInterfaceGroup(from: $0, deviceHandle: deviceHandle).descriptors }
     }
     
-    internal init(from libusbDescriptor: libusb_config_descriptor, device: USBDevice) {
+    internal init(
+        from libusbDescriptor: libusb_config_descriptor,
+        deviceHandle: OpaquePointer
+    ) {
         self.libusbDescriptor = libusbDescriptor
-        self.device = device
+        self.deviceHandle = deviceHandle
+    }
+}
+
+extension USBConfiguration: CustomStringConvertible {
+    public var description: String {
+        getString(from: libusbDescriptor.iConfiguration, deviceHandle: deviceHandle) ?? ""
     }
 }

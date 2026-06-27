@@ -1,6 +1,6 @@
 import CLibUSB
 
-enum USBTransferError: UInt32, Error {
+public enum USBTransferError: UInt32, Error, Sendable {
     case fail = 1
     case timeout = 2
     case cancelled = 3

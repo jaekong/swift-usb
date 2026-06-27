@@ -1,24 +1,49 @@
-import Foundation
 import CLibUSB
+import BasicContainers
 
-public class USB {
+public struct USB: ~Copyable, ~Sendable {
+    #if hasFeature(Embedded)
+    nonisolated(unsafe) public static let shared = try! USB.init()
+    #else
+    @MainActor public static let shared = try! USB.init()
+    #endif
+    
+    private let context: OpaquePointer
+    
     public init() throws {
-//        var libusbOptions = options.map { $0.libusbOption }
-        
-//        let initialization = libusb_init_context(nil, &libusbOptions, Int32(libusbOptions.count))
-        let initialization = libusb_init(nil)
+        var ctx: OpaquePointer? = nil
+        let initialization = libusb_init(&ctx)
         
         if let error = USBError(rawValue: initialization) {
             throw error
         }
+        
+        guard let ctx else {
+            fatalError("Failed to obtain context from `libusb_init(_:)`.")
+        }
+        
+        context = ctx
     }
     
-    public func getDevices(matching filter: ((USBDevice) -> Bool)?) -> [USBDevice] {
+    deinit {
+        libusb_exit(self.context)
+    }
+    
+    @export(interface)
+    consuming public func close() {
+        libusb_exit(self.context)
+        discard self
+    }
+    
+    public func getDevices(
+        matching filter: ((borrowing USBDevice) -> Bool)? = nil
+    ) -> UniqueArray<USBDevice> {
         var devicePointers: UnsafeMutablePointer<OpaquePointer?>? = nil
+        
         let deviceCount = libusb_get_device_list(nil, &devicePointers)
         
         guard deviceCount > 0 else {
-            return []
+            return .init()
         }
         
         guard let devicePointers else {
@@ -26,7 +51,7 @@ public class USB {
         }
         
         var devicePointer: OpaquePointer? = devicePointers.pointee
-        var devices: [USBDevice] = []
+        var devices: UniqueArray<USBDevice> = .init()
         
         var pointing = devicePointers
         
@@ -44,7 +69,7 @@ public class USB {
                 guard filter(device) else { continue }
             }
             
-            devices.append(device)
+            devices.append(consume device)
         }
         
         libusb_free_device_list(devicePointers, 1)
@@ -53,18 +78,7 @@ public class USB {
     }
 }
 
-//public enum USBOption {
-//    case logLevel(USBLogLevel)
-//    
-//    internal var libusbOption: libusb_init_option {
-//        switch self {
-//        case .logLevel(let level):
-//            libusb_init_option(option: LIBUSB_OPTION_LOG_LEVEL, value: .init(ival: Int32(level.libusbLogLevel.rawValue)))
-//        }
-//    }
-//}
-
-public enum USBLogLevel: UInt8 {
+public enum USBLogLevel: UInt8, Sendable {
     case none = 0
     case error
     case warning

@@ -1,7 +1,6 @@
-import Foundation
 import CLibUSB
 
-public enum USBError: Int32, Error {
+public enum USBError: Int32, Error, Sendable {
     /** Input/output error */
     case ioError = -1
     /** Invalid parameter */

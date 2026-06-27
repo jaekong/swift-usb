@@ -5,9 +5,12 @@ import PackageDescription
 
 let package = Package(
     name: "swift-usb",
-    platforms: [.macOS(.v12), .iOS(.v13)],
+    platforms: [.macOS(.v14), .iOS(.v13)],
     products: [
         .library(name: "USB", targets: ["USB"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.6.0")
     ],
     targets: [
         .systemLibrary(
@@ -21,9 +24,21 @@ let package = Package(
         .target(
             name: "USB",
             dependencies: [
-                .target(name: "CLibUSB")
+                .target(name: "CLibUSB"),
+                .product(name: "BasicContainers", package: "swift-collections")
             ],
+            swiftSettings: [
+                .treatWarning("EmbeddedRestrictions", as: .error),
+                .enableExperimentalFeature("MoveOnly"),
+                .enableExperimentalFeature("Lifetimes"),
+            ]
         ),
+        .testTarget(
+            name: "USBTest",
+            dependencies: [
+                .target(name: "USB")
+            ]
+        )
     ],
     
 )

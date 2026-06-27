@@ -2,28 +2,32 @@ import CLibUSB
 
 /// A USB Interface Descriptor.
 public struct USBInterface: CustomStringConvertible {
-    internal var libusbDescriptor: libusb_interface_descriptor
-    public var description: String {
-        getString(from: libusbDescriptor.iInterface, device: device) ?? ""
-    }
-    unowned internal var device: USBDevice
+    private let libusbDescriptor: libusb_interface_descriptor
+    public let description: String
     
-    public var endpoints: [USBEndpoint] = []
+    public let endpoints: [USBEndpoint]
     
-    public var output: USBEndpoint? {
+    lazy public private(set) var output: USBEndpoint? = {
         self.endpoints.first { $0.direction == .output }
-    }
+    }()
     
-    public var input: USBEndpoint? {
+    lazy public private(set) var input: USBEndpoint? = {
         self.endpoints.first { $0.direction == .input }
-    }
+    }()
     
-    internal init(from libusbDescriptor: libusb_interface_descriptor, device: USBDevice) {
+    internal init(
+        from libusbDescriptor: libusb_interface_descriptor,
+        description: String
+    ) {
         self.libusbDescriptor = libusbDescriptor
-        self.device = device
+        self.description = description
         
         let count = libusbDescriptor.bNumEndpoints
-        guard count > 0 else { return }
+        guard count > 0 else {
+            self.endpoints = []
+            return
+        }
+        
         guard let pointer = libusbDescriptor.endpoint else { fatalError() }
         var results: [USBEndpoint] = []
         
@@ -39,14 +43,11 @@ public struct USBInterface: CustomStringConvertible {
 /// A group of USB Interface Descriptors based on the interface's Alternate Settings.
 public struct USBInterfaceGroup {
     internal let libusbInterface: libusb_interface
-    unowned internal var device: USBDevice
-    
     public var descriptors: [USBInterface]
     
-    internal init(from libusbInterface: libusb_interface, device: USBDevice) {
+    internal init(from libusbInterface: libusb_interface, deviceHandle: OpaquePointer) {
         self.libusbInterface = libusbInterface
         self.descriptors = []
-        self.device = device
         
         let altCount = libusbInterface.num_altsetting
         guard let altPointer = libusbInterface.altsetting else {
@@ -55,7 +56,12 @@ public struct USBInterfaceGroup {
         
         for i in 0..<Int(altCount) {
             let alt = altPointer.advanced(by: i).pointee
-            descriptors.append(USBInterface(from: alt, device: device))
+            descriptors.append(
+                USBInterface(
+                    from: alt,
+                    description: getString(from: alt.iInterface, deviceHandle: deviceHandle) ?? "Unknown"
+                )
+            )
         }
     }
 }

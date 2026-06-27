@@ -1,7 +1,6 @@
-import Foundation
 import CLibUSB
 
-public enum USBDeviceClass: UInt8 {
+public enum USBDeviceClass: UInt8, Sendable {
     case perInterface = 0x00
     case audioDevice = 0x01
     case communications = 0x02

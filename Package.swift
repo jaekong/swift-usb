@@ -1,16 +1,13 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 6.4
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
     name: "swift-usb",
-    platforms: [.macOS(.v14), .iOS(.v13)],
+    platforms: [.macOS(.v27), .iOS(.v27)],
     products: [
         .library(name: "USB", targets: ["USB"]),
-    ],
-    dependencies: [
-        .package(url: "https://github.com/apple/swift-collections.git", from: "1.6.0")
     ],
     targets: [
         .systemLibrary(
@@ -25,7 +22,6 @@ let package = Package(
             name: "USB",
             dependencies: [
                 .target(name: "CLibUSB"),
-                .product(name: "BasicContainers", package: "swift-collections")
             ],
             swiftSettings: [
                 .treatWarning("EmbeddedRestrictions", as: .error),
@@ -40,5 +36,4 @@ let package = Package(
             ]
         )
     ],
-    
 )

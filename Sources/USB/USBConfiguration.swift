@@ -1,9 +1,13 @@
 import CLibUSB
 
+/// A structure containing data about available interfaces provided by the configuration.
+///
+/// - Note: This struct internally holds `libusb_config_descriptor`, which is the USB configuration descriptor implementation in libusb.
 public struct USBConfiguration {
     internal var libusbDescriptor: libusb_config_descriptor
     private let deviceHandle: OpaquePointer
     
+    /// All available interfaces in this configuration.
     public var interfaces: [USBInterface] {
         let count = libusbDescriptor.bNumInterfaces
         let pointer = libusbDescriptor.interface
@@ -31,6 +35,6 @@ public struct USBConfiguration {
 
 extension USBConfiguration: CustomStringConvertible {
     public var description: String {
-        getString(from: libusbDescriptor.iConfiguration, deviceHandle: deviceHandle) ?? ""
+        getString(from: libusbDescriptor.iConfiguration, deviceHandle: deviceHandle) ?? "<No string descriptor provided.>"
     }
 }

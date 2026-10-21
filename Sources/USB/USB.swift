@@ -1,16 +1,9 @@
 import CLibUSB
-import BasicContainers
 
 public struct USB: ~Copyable, ~Sendable {
-    #if hasFeature(Embedded)
-    nonisolated(unsafe) public static let shared = try! USB.init()
-    #else
-    @MainActor public static let shared = try! USB.init()
-    #endif
-    
     private let context: OpaquePointer
     
-    public init() throws {
+    public init() throws(USBError) {
         var ctx: OpaquePointer? = nil
         let initialization = libusb_init(&ctx)
         
@@ -37,13 +30,21 @@ public struct USB: ~Copyable, ~Sendable {
     
     public func getDevices(
         matching filter: ((borrowing USBDevice) -> Bool)? = nil
-    ) -> UniqueArray<USBDevice> {
+    ) throws(USBError) -> UniqueArray<USBDevice> {
         var devicePointers: UnsafeMutablePointer<OpaquePointer?>? = nil
         
         let deviceCount = libusb_get_device_list(nil, &devicePointers)
         
+        defer {
+            libusb_free_device_list(devicePointers, 1)
+        }
+        
         guard deviceCount > 0 else {
-            return .init()
+            if let error = USBError(rawValue: Int32(deviceCount)) {
+                throw error
+            } else {
+                return .init()
+            }
         }
         
         guard let devicePointers else {
@@ -61,7 +62,7 @@ public struct USB: ~Copyable, ~Sendable {
                 devicePointer = pointing.pointee
             }
             
-            guard let device = USBDevice(libusbDevice: devicePointer!) else {
+            guard let device = try? USBDevice(libusbDevice: devicePointer!) else {
                 continue
             }
             
@@ -71,8 +72,6 @@ public struct USB: ~Copyable, ~Sendable {
             
             devices.append(consume device)
         }
-        
-        libusb_free_device_list(devicePointers, 1)
         
         return devices
     }

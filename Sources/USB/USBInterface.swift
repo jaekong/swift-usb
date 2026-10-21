@@ -1,23 +1,44 @@
 import CLibUSB
 
-/// A USB Interface Descriptor.
-public struct USBInterface: CustomStringConvertible {
+/// A structure representing a USB interface.
+///
+/// USB Interfaces are provided by a USB Configuration, and can contain multiple endpoints. Depending on the device, each interface can have different purpose.
+///
+/// - Note: This struct internally holds `libusb_interface_descriptor`, which is a libusb implementation of the equivalent USB standards.
+public struct USBInterface {
     private let libusbDescriptor: libusb_interface_descriptor
-    public let description: String
     
+    /// Description text for the interface.
+    ///
+    /// Its contents come from `libusb_interface_descriptor.iInterface`
+    public let description: String?
+    
+    /// Available endpoints.
     public let endpoints: [USBEndpoint]
     
-    lazy public private(set) var output: USBEndpoint? = {
+    /// First output endpoint provided by this interface.
+    public var firstOutput: USBEndpoint? {
         self.endpoints.first { $0.direction == .output }
-    }()
+    }
     
-    lazy public private(set) var input: USBEndpoint? = {
+    /// First input endpoint provided by this interface.
+    public var firstInput: USBEndpoint? {
         self.endpoints.first { $0.direction == .input }
-    }()
+    }
+    
+    /// Index of this interface's alternate setting mode.
+    ///
+    /// Alternate settings provide a way to categorize interfaces, and address many number of interfaces within a device.
+    /// This information is primarily used internally by libusb, and in most cases you can ignore this.
+    public var alternateSettingID: UInt8 {
+        borrow {
+            libusbDescriptor.bAlternateSetting
+        }
+    }
     
     internal init(
         from libusbDescriptor: libusb_interface_descriptor,
-        description: String
+        description: String?
     ) {
         self.libusbDescriptor = libusbDescriptor
         self.description = description
@@ -40,8 +61,14 @@ public struct USBInterface: CustomStringConvertible {
     }
 }
 
-/// A group of USB Interface Descriptors based on the interface's Alternate Settings.
-public struct USBInterfaceGroup {
+extension USBInterface: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        self.description ?? "<No string descriptor provided.>"
+    }
+}
+
+/// A group of USB interface descriptors, grouped by the interfaces' alternate setting index.
+internal struct USBInterfaceGroup {
     internal let libusbInterface: libusb_interface
     public var descriptors: [USBInterface]
     
@@ -59,7 +86,7 @@ public struct USBInterfaceGroup {
             descriptors.append(
                 USBInterface(
                     from: alt,
-                    description: getString(from: alt.iInterface, deviceHandle: deviceHandle) ?? "Unknown"
+                    description: getString(from: alt.iInterface, deviceHandle: deviceHandle)
                 )
             )
         }

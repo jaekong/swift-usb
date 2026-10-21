@@ -1,8 +1,8 @@
 import CLibUSB
 
-/// A class that represents a USB device.
+/// A struct that represents a USB device.
 ///
-/// You can get a `USBDevice` from `USB.getDevices(matching:)`
+/// Instead of directly initializing, you can get a `USBDevice` from `USB.getDevices(matching:)`.
 public struct USBDevice: ~Copyable, ~Sendable {
     internal let libusbDevice: OpaquePointer
     internal let libusbDescriptor: libusb_device_descriptor
@@ -38,28 +38,26 @@ public struct USBDevice: ~Copyable, ~Sendable {
         getString(from: libusbDescriptor.iSerialNumber)
     }
     
-    internal init?(libusbDevice: OpaquePointer) {
+    internal init(libusbDevice: OpaquePointer) throws(USBError) {
         self.libusbDevice = libusbDevice
         
         let descriptorPointer = UnsafeMutablePointer<libusb_device_descriptor>.allocate(capacity: 1)
         let fetchResult = libusb_get_device_descriptor(libusbDevice, descriptorPointer)
         
-        guard fetchResult == 0 else {
-            return nil
+        if let error = USBError(rawValue: fetchResult) {
+            descriptorPointer.deallocate()
+            throw error
         }
         
         self.libusbDescriptor = descriptorPointer.pointee
     }
     
     deinit {
-        release:
-        if isClaimed {
-            guard let libusbHandle else { break release }
-            
+        if let libusbHandle, isClaimed {
             libusb_release_interface(libusbHandle, 0)
         }
         
-        if isOpen {
+        if let libusbHandle, isOpen {
             libusb_close(libusbHandle)
         }
     }
@@ -84,9 +82,10 @@ public struct USBDevice: ~Copyable, ~Sendable {
     
     public var interfaces: [USBInterface] {
         self.configurations.flatMap { $0.interfaces }
+        
     }
     
-    mutating public func open() throws {
+    mutating public func open() throws(USBError) {
         guard !isOpen else { throw USBError.alreadyOpen }
         
         let handlePointer = UnsafeMutablePointer<OpaquePointer?>.allocate(capacity: 1)
@@ -114,9 +113,11 @@ public struct USBDevice: ~Copyable, ~Sendable {
         discard self
     }
     
-    mutating public func claim() throws {
+    mutating public func claim() throws(USBError) {
         guard !isClaimed else { return }
-        guard let libusbHandle else { throw USBError.noAvailableDevice }
+        guard let libusbHandle else {
+            throw USBError.isNotOpen
+        }
         
         let result = libusb_claim_interface(libusbHandle, 0)
         if let error = USBError(rawValue: result) {
@@ -133,56 +134,6 @@ public struct USBDevice: ~Copyable, ~Sendable {
         libusb_release_interface(libusbHandle, 0)
         
         isClaimed = false
-    }
-    
-    public func send(_ data: inout MutableRawSpan, to endpoint: USBEndpoint) {
-        let size = data.byteCount
-        data.withUnsafeMutableBytes { dataBuffer in
-            let pointer = dataBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self)
-            let transfer = libusb_alloc_transfer(0)
-            
-            libusb_fill_bulk_transfer(
-                transfer,
-                self.libusbHandle,
-                endpoint.address,
-                pointer,
-                Int32(size),
-                nil, nil, 1000
-            )
-            
-            libusb_submit_transfer(transfer)
-        }
-    }
-    
-    public func send(_ data: borrowing RawSpan, to endpoint: USBEndpoint) {
-        let size = data.byteCount
-        data.withUnsafeBytes { buffer in
-            let pointer = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
-            let opaque = OpaquePointer(pointer)
-            let fauxMutable = UnsafeMutablePointer<UInt8>(opaque)
-            let transfer = libusb_alloc_transfer(0)
-            
-            libusb_fill_bulk_transfer(
-                transfer,
-                self.libusbHandle,
-                endpoint.address,
-                fauxMutable,
-                Int32(size),
-                nil, nil, 1000
-            )
-            
-            libusb_submit_transfer(transfer)
-        }
-    }
-    
-    @available(anyAppleOS 26, *)
-    public func send(_ bytes: [UInt8], to endpoint: USBEndpoint) {
-        send(bytes.span.bytes, to: endpoint)
-    }
-    
-    @available(anyAppleOS 26, *)
-    public func send<let count: Int>(_ bytes: [count of UInt8], to endpoint: USBEndpoint) {
-        send(bytes.span.bytes, to: endpoint)
     }
     
     internal func getString(from index: UInt8, maxLength: Int32 = 1024) -> String? {

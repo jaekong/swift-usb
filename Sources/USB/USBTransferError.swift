@@ -1,39 +1,27 @@
 import CLibUSB
 
-public enum USBTransferError: UInt32, Error, Sendable {
+/// Error thrown during USB Transfer.
+///
+/// - Note: This enumeration contains all of `libusb_transfer_status` cases, and some additional error cases. `libusb_transfer_status` codes match this enumeration's `rawValue`, and additional cases have `rawValue`s of 1000 or greater.
+public enum USBTransferError: UInt32, Error, Sendable, CustomStringConvertible {
     case fail = 1
     case timeout = 2
     case cancelled = 3
+    case stalled = 4
     case disconnected = 5
     case overflow = 6
+    
+    case notOpen = 1000
+    case notClaimed = 1001
+    
+    public var description: String {
+        switch self {
+        case .notOpen: "The device is not open."
+        case .notClaimed: "The device is not claimed."
+        default:
+            if let cString = libusb_error_name(Int32(self.rawValue)) {
+                String(cString: cString)
+            } else { "Unknown" }
+        }
+    }
 }
-
-/*
-enum libusb_transfer_status {
-    /** Transfer completed without error. Note that this does not indicate
-     * that the entire amount of requested data was transferred. */
-    LIBUSB_TRANSFER_COMPLETED,
-
-    /** Transfer failed */
-    LIBUSB_TRANSFER_ERROR,
-
-    /** Transfer timed out */
-    LIBUSB_TRANSFER_TIMED_OUT,
-
-    /** Transfer was cancelled */
-    LIBUSB_TRANSFER_CANCELLED,
-
-    /** For bulk/interrupt endpoints: halt condition detected (endpoint
-     * stalled). For control endpoints: control request not supported. */
-    LIBUSB_TRANSFER_STALL,
-
-    /** Device was disconnected */
-    LIBUSB_TRANSFER_NO_DEVICE,
-
-    /** Device sent more data than requested */
-    LIBUSB_TRANSFER_OVERFLOW
-
-    /* NB! Remember to update libusb_error_name()
-       when adding new status codes here. */
-};
-*/

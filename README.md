@@ -53,6 +53,7 @@ Note that installing libusb via Homebrew may not properly configure pkg-config. 
 ---
 
 No generative AI was used in developing this package.
+
 Under no circumstance AI contributions will be accepted.
 
 [^1]: `Data` is only supported in Full Swift mode with `FoundationEssentials` / `Foundation` module available.

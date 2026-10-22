@@ -1,5 +1,7 @@
 # swift-usb
 
+![NO AI](https://img.shields.io/badge/NO-AI-EEEEEE?style=flat-square&labelColor=orange&color=EEEEEE) ![For Swift 6.4+](https://img.shields.io/badge/swift-6.4%2B-orange?style=flat-square)
+
 A wrapper package for [libusb](https://libusb.info), a cross-platform USB library.
 
 # Features
@@ -7,7 +9,7 @@ A wrapper package for [libusb](https://libusb.info), a cross-platform USB librar
 - Noncopyable, Nonsendable primitives for safety
 - Swift Concurrency
 - All Errors are typed throws
-- Supports sending data from `Span`, `[UInt8]`, `InlineArray<UInt8>`, and `Data`[^1]
+- Supports sending data from `Span<UInt8>`, `RawSpan`, `[UInt8]`, `InlineArray<UInt8>`, and `Data`[^1]
 - Embedded Swift support on macOS and Linux[^2][^3]
 - Currently only supports sending data via bulk transfer
 
@@ -47,6 +49,11 @@ Note that installing libusb via Homebrew may not properly configure pkg-config. 
 ## Attribution
 
 - [libusb](https://libusb.info)
+
+---
+
+No generative AI was used in developing this package.
+Under no circumstance AI contributions will be accepted.
 
 [^1]: `Data` is only supported in Full Swift mode with `FoundationEssentials` / `Foundation` module available.
 [^2]: Embedded Swift support is not intended for microcontrollers. It's for performance-critical use cases, or in case you need minimal runtime dependency.

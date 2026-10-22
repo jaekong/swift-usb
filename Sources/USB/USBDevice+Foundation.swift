@@ -1,6 +1,11 @@
-#if canImport(Foundation)
+#if !hasFeature(Embedded) && (canImport(Foundation) || canImport(FoundationEssentials))
 import CLibUSB
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#elseif canImport(Foundation)
 import Foundation
+#endif
 
 extension USBDevice {
     public func bulkTransfer(

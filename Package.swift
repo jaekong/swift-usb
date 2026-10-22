@@ -15,7 +15,8 @@ let package = Package(
             pkgConfig: "libusb-1.0",
             providers: [
                 .brew(["libusb"]),
-                .apt(["libusb-1.0-0-dev"])
+                .apt(["libusb-1.0-0-dev"]),
+                .yum(["libusb1"])
             ],
         ),
         .target(

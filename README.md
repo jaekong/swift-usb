@@ -2,29 +2,43 @@
 
 A wrapper package for [libusb](https://libusb.info), a cross-platform USB library.
 
-Currently only supports sending data via bulk transfer.
+# Features
+
+- Noncopyable, Nonsendable primitives for safety
+- Swift Concurrency
+- All Errors are typed throws
+- Supports sending data from `Span`, `[UInt8]`, `InlineArray<UInt8>`, and `Data`[^1]
+- Embedded Swift support on macOS and Linux[^2][^3]
+- Currently only supports sending data via bulk transfer
 
 ## Example
 
 ```swift
-let usb = try USB(options: [.logLevel(.debug)])
-let devices = usb.getDevices(matching: { device in
+let usb = try USB()
+let devices = try usb.getDevices(matching: { device in
     device.productID == myPID
 })
 
-guard let device = devices.first else { fatalError() }
+guard var device = devices.popLast() else { fatalError() }
 
 try device.open()
 try device.claim()
 
-guard let endpoint = device.configurations.interfaces.first?.output else { fatalError() }
+guard let endpoint = device.interfaces.first?.firstOutput else { fatalError() }
 
-device.send(data, to: endpoint)
+// Sending [UInt8] Array
+let array: [UInt8] = [0, 1, 2, 3]
+try await device.bulkTransfer(array, to: endpoint)
+
+// Sending without copying underlying data with RawSpan
+let rawSpan = array.span.bytes
+try await device.bulkTransfer(rawSpan, to: endpoint)
 ```
 
 ## Requirements
 
-- Swift 6.2
+- Swift 6.4
+  - On Apple platforms, requires OS version 27 or higher.
 - pkg-config
 - libusb-1.0
 
@@ -33,3 +47,7 @@ Note that installing libusb via Homebrew may not properly configure pkg-config. 
 ## Attribution
 
 - [libusb](https://libusb.info)
+
+[^1]: `Data` is only supported in Full Swift mode with `FoundationEssentials` / `Foundation` module available.
+[^2]: Embedded Swift support is not intended for microcontrollers. It's for performance-critical use cases, or in case you need minimal runtime dependency.
+[^3]: Windows is currently not supported. It should be possible, but it needs different `Package.swift` configuration, which I can't verify because I don't use Windows.

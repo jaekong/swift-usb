@@ -24,6 +24,7 @@ extension USBDevice {
         }
     }
     
+    @concurrent
     public func bulkTransfer(
         _ data: inout MutableRawSpan,
         to endpoint: USBEndpoint,
@@ -103,6 +104,7 @@ extension USBDevice {
         }
     }
     
+    @concurrent
     public func bulkTransfer(
         _ data: borrowing RawSpan,
         to endpoint: USBEndpoint,
@@ -202,6 +204,7 @@ extension USBDevice {
         )
     }
     
+    @concurrent
     public func bulkTransfer(
         _ bytes: [UInt8],
         to endpoint: USBEndpoint,
@@ -210,6 +213,7 @@ extension USBDevice {
         try await bulkTransfer(bytes.span.bytes, to: endpoint, timeout: timeout)
     }
     
+    @concurrent
     public func bulkTransfer<let count: Int>(
         _ bytes: [count of UInt8],
         to endpoint: USBEndpoint,
@@ -218,6 +222,7 @@ extension USBDevice {
         try await bulkTransfer(bytes.span.bytes, to: endpoint, timeout: timeout)
     }
     
+    @concurrent
     public func bulkTransfer(
         _ bytes: Span<UInt8>,
         to endpoint: USBEndpoint,

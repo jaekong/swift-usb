@@ -24,6 +24,7 @@ extension USBDevice {
         }
     }
     
+    @concurrent
     public func bulkTransfer(
         _ data: Data,
         to endpoint: USBEndpoint,

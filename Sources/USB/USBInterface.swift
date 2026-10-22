@@ -5,7 +5,7 @@ import CLibUSB
 /// USB Interfaces are provided by a USB Configuration, and can contain multiple endpoints. Depending on the device, each interface can have different purpose.
 ///
 /// - Note: This struct internally holds `libusb_interface_descriptor`, which is a libusb implementation of the equivalent USB standards.
-public struct USBInterface {
+public struct USBInterface: @unchecked Sendable {
     private let libusbDescriptor: libusb_interface_descriptor
     
     /// Description text for the interface.

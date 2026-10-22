@@ -86,8 +86,8 @@ public struct USBDevice: ~Copyable, ~Sendable {
     }
     
     mutating public func open() throws(USBError) {
-        guard !isOpen else { throw USBError.alreadyOpen }
-        
+        if isOpen { return }
+
         let handlePointer = UnsafeMutablePointer<OpaquePointer?>.allocate(capacity: 1)
         let result = libusb_open(libusbDevice, handlePointer)
         if let error = USBError(rawValue: result) {

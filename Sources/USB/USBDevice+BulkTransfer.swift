@@ -75,8 +75,6 @@ extension USBDevice {
                 libusb_submit_transfer(transfer)
             }
         }
-        
-        
     }
     
     public func bulkTransfer(
@@ -191,6 +189,20 @@ extension USBDevice {
     }
     
     public func bulkTransfer(
+        _ bytes: Span<UInt8>,
+        to endpoint: USBEndpoint,
+        callback: (@convention(c) (UnsafeMutablePointer<libusb_transfer>?) -> Void)? = nil,
+        timeout: UInt32 = 1000
+    ) {
+        bulkTransfer(
+            bytes.bytes,
+            to: endpoint,
+            callback: callback,
+            timeout: timeout
+        )
+    }
+    
+    public func bulkTransfer(
         _ bytes: [UInt8],
         to endpoint: USBEndpoint,
         timeout: UInt32 = 1000
@@ -204,5 +216,13 @@ extension USBDevice {
         timeout: UInt32 = 1000
     ) async throws(USBTransferError) {
         try await bulkTransfer(bytes.span.bytes, to: endpoint, timeout: timeout)
+    }
+    
+    public func bulkTransfer(
+        _ bytes: Span<UInt8>,
+        to endpoint: USBEndpoint,
+        timeout: UInt32 = 1000
+    ) async throws(USBTransferError) {
+        try await bulkTransfer(bytes.bytes, to: endpoint, timeout: timeout)
     }
 }

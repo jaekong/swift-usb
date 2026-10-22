@@ -1,7 +1,7 @@
 import CLibUSB
 
-public struct USB: ~Copyable, ~Sendable {
-    private let context: OpaquePointer
+public struct USB: ~Copyable, Sendable {
+    nonisolated(unsafe) private let context: OpaquePointer
     
     public init() throws(USBError) {
         var ctx: OpaquePointer? = nil

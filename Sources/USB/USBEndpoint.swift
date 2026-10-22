@@ -14,6 +14,11 @@ public struct USBEndpoint: Copyable, Sendable {
         address = libusbDescriptor.bEndpointAddress & 0b1111
         direction = USBEndpointDirection(rawValue: libusbDescriptor.bEndpointAddress & 0x80)!
     }
+    
+    public init(address: UInt8, direction: USBEndpointDirection) {
+        self.address = address
+        self.direction = direction
+    }
 }
 
 /// I/O direction of an endpoint.

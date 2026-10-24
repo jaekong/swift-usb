@@ -29,7 +29,7 @@ extension USBDevice {
         _ data: Data,
         to endpoint: USBEndpoint,
         timeout: UInt32 = 1000
-    ) async throws {
+    ) async throws(USBError) {
         try await bulkTransfer(data.bytes, to: endpoint, timeout: timeout)
     }
 }

@@ -27,15 +27,21 @@ public struct USBDevice: ~Copyable, ~Sendable {
     public private(set) var isClaimed: Bool = false
     
     public var productName: String? {
-        getString(from: libusbDescriptor.iProduct)
+        let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: Int(1024))
+        libusb_get_device_string(self.libusbDevice, LIBUSB_DEVICE_STRING_PRODUCT, buffer, 1024)
+        return String(cString: buffer)
     }
     
     public var manufacturerName: String? {
-        getString(from: libusbDescriptor.iManufacturer)
+        let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: Int(1024))
+        libusb_get_device_string(self.libusbDevice, LIBUSB_DEVICE_STRING_MANUFACTURER, buffer, 1024)
+        return String(cString: buffer)
     }
     
     public var serialNumber: String? {
-        getString(from: libusbDescriptor.iSerialNumber)
+        let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: Int(1024))
+        libusb_get_device_string(self.libusbDevice, LIBUSB_DEVICE_STRING_SERIAL_NUMBER, buffer, 1024)
+        return String(cString: buffer)
     }
     
     internal init(libusbDevice: OpaquePointer) throws(USBError) {
@@ -82,7 +88,6 @@ public struct USBDevice: ~Copyable, ~Sendable {
     
     public var interfaces: [USBInterface] {
         self.configurations.flatMap { $0.interfaces }
-        
     }
     
     mutating public func open() throws(USBError) {
@@ -134,10 +139,5 @@ public struct USBDevice: ~Copyable, ~Sendable {
         libusb_release_interface(libusbHandle, 0)
         
         isClaimed = false
-    }
-    
-    internal func getString(from index: UInt8, maxLength: Int32 = 1024) -> String? {
-        guard let handle = self.libusbHandle else { return nil }
-        return USB::getString(from: index, deviceHandle: handle, maxLength: maxLength)
     }
 }

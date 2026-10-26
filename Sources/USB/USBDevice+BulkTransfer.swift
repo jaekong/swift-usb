@@ -4,23 +4,21 @@ extension USBDevice {
     public func bulkTransfer(
         _ data: inout MutableRawSpan,
         to endpoint: USBEndpoint,
-        callback: (@convention(c) (UnsafeMutablePointer<libusb_transfer>?) -> Void)? = nil,
         timeout: UInt32 = 1000
-    ) {
+    ) throws(USBError) {
         let size = data.byteCount
-        data.withUnsafeMutableBytes { dataBuffer in
-            let transfer = libusb_alloc_transfer(0)
-            
-            libusb_fill_bulk_transfer(
-                transfer,
+        try data.withUnsafeMutableBytes { (dataBuffer: UnsafeMutableRawBufferPointer) throws(USBError) in
+            let code = libusb_bulk_transfer(
                 self.libusbHandle,
                 endpoint.address,
                 dataBuffer.baseAddress,
                 Int32(size),
-                callback, nil, timeout
+                nil, timeout
             )
             
-            libusb_submit_transfer(transfer)
+            if let status = USBError(rawValue: code) {
+                throw status
+            }
         }
     }
     
@@ -58,24 +56,24 @@ extension USBDevice {
         to endpoint: USBEndpoint,
         callback: (@convention(c) (UnsafeMutablePointer<libusb_transfer>?) -> Void)? = nil,
         timeout: UInt32 = 1000
-    ) {
+    ) throws(USBError) {
         let size = data.byteCount
-        data.withUnsafeBytes { dataBuffer in
+        try data.withUnsafeBytes { (dataBuffer: UnsafeRawBufferPointer) throws(USBError) in
             let bufferBasePointer = dataBuffer.baseAddress!
             let opaquePointer = OpaquePointer(bufferBasePointer)
             let mutablePointer = UnsafeMutablePointer<UInt8>(opaquePointer)
-            let transfer = libusb_alloc_transfer(0)
             
-            libusb_fill_bulk_transfer(
-                transfer,
+            let code = libusb_bulk_transfer(
                 self.libusbHandle,
                 endpoint.address,
                 mutablePointer,
                 Int32(size),
-                callback, nil, timeout
+                nil, timeout
             )
             
-            libusb_submit_transfer(transfer)
+            if let status = USBError(rawValue: code) {
+                throw status
+            }
         }
     }
     
@@ -117,8 +115,8 @@ extension USBDevice {
         to endpoint: USBEndpoint,
         callback: (@convention(c) (UnsafeMutablePointer<libusb_transfer>?) -> Void)? = nil,
         timeout: UInt32 = 1000
-    ) {
-        bulkTransfer(
+    ) throws(USBError) {
+        try bulkTransfer(
             bytes.span.bytes,
             to: endpoint,
             callback: callback,
@@ -131,8 +129,8 @@ extension USBDevice {
         to endpoint: USBEndpoint,
         callback: (@convention(c) (UnsafeMutablePointer<libusb_transfer>?) -> Void)? = nil,
         timeout: UInt32 = 1000
-    ) {
-        bulkTransfer(
+    ) throws(USBError) {
+        try bulkTransfer(
             bytes.span.bytes,
             to: endpoint,
             callback: callback,
@@ -145,8 +143,8 @@ extension USBDevice {
         to endpoint: USBEndpoint,
         callback: (@convention(c) (UnsafeMutablePointer<libusb_transfer>?) -> Void)? = nil,
         timeout: UInt32 = 1000
-    ) {
-        bulkTransfer(
+    ) throws(USBError) {
+        try bulkTransfer(
             bytes.bytes,
             to: endpoint,
             callback: callback,

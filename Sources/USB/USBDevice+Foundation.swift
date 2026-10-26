@@ -13,9 +13,9 @@ extension USBDevice {
         to endpoint: USBEndpoint,
         callback: (@convention(c) (UnsafeMutablePointer<libusb_transfer>?) -> Void)? = nil,
         timeout: UInt32 = 1000
-    ) {
-        bytes.withBytes { span in
-            bulkTransfer(
+    ) throws(USBError) {
+        try bytes.withBytes { (span: RawSpan) throws(USBError) in
+            try bulkTransfer(
                 span,
                 to: endpoint,
                 callback: callback,

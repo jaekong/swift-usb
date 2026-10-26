@@ -3,7 +3,7 @@ import CLibUSB
 /// Collection of possible error codes.
 ///
 /// - Note: This enumeration contains all of `libusb_error` cases, and some additional error cases. `libusb_error` codes match this enumeration's `rawValue`, and additional cases have `rawValue`s of -1000 or less.
-public enum USBError: Int32, Error, Sendable, CustomStringConvertible {
+public enum USBError: Int32, Error, Sendable {
     /// I/O Error.
     case ioError = -1
     
@@ -48,7 +48,9 @@ public enum USBError: Int32, Error, Sendable, CustomStringConvertible {
     
     /// The device is already open.
     case alreadyOpen = -1001
-    
+}
+
+extension USBError: CustomStringConvertible {
     public var description: String {
         switch self {
         case .isNotOpen: "The device is not open."
